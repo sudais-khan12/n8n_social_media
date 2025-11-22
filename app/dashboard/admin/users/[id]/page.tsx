@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { ArrowLeft, Pencil, FileText, User as UserIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getUserById } from "@/app/server/admin/users";
 import { listPostsByUser } from "@/app/server/admin/posts";
 import EditPostModal from "../../EditPostModal";
@@ -22,7 +23,7 @@ interface Post {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url: string | null;
   status: string;
   comment: string | null;
@@ -108,133 +109,174 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-slate-600">Loading...</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full"
+        />
       </div>
     );
   }
 
   if (error || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-red-600">{error || "User not found"}</p>
-            <button
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-12 bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-8"
+          >
+            <p className="text-red-600 font-semibold mb-4">{error || "User not found"}</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => router.push("/dashboard/admin")}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 transition-all shadow-md font-semibold cursor-pointer"
             >
               Back to Admin Dashboard
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <button
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-8"
+        >
+          <motion.button
+            whileHover={{ x: -4 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => router.push("/dashboard/admin")}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors group"
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors group font-semibold cursor-pointer"
           >
-            <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back to Dashboard</span>
-          </button>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">User Details</h1>
-        </div>
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Dashboard</span>
+          </motion.button>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent mb-2">User Details</h1>
+        </motion.div>
 
         {/* User Info Card */}
-        <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-6 mb-8"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">{user.username}</h2>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div>
-                  <span className="text-slate-500">Role:</span>{" "}
-                  <span
-                    className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      user.role === "admin"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-slate-100 text-slate-700"
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Created:</span>{" "}
-                  <span className="text-slate-900">
-                    {formatDate(user.created_at)}
-                  </span>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-md">
+                <UserIcon className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">{user.username}</h2>
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-500 font-medium">Role:</span>{" "}
+                    <span
+                      className={`inline-flex px-3 py-1.5 text-xs font-bold rounded-full ${
+                        user.role === "admin"
+                          ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium">Created:</span>{" "}
+                    <span className="text-slate-900 font-semibold">
+                      {formatDate(user.created_at)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Posts Section */}
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-indigo-900 bg-clip-text text-transparent mb-6">
             All Posts ({posts.length})
           </h2>
 
           {posts.length === 0 ? (
-            <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-12 text-center">
-              <p className="text-slate-500">This user has no posts yet.</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-12 text-center"
+            >
+              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium">This user has no posts yet.</p>
+            </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
-                  onClick={() => setEditingPost(post)}
-                  className="bg-white/70 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-4 cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02]"
-                >
-                  {post.image_url && (
-                    <div className="mb-4">
-                      <img
-                        src={post.image_url}
-                        alt={post.heading}
-                        className="w-full h-48 object-cover rounded-lg shadow-md"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
+              <AnimatePresence>
+                {posts.map((post, index) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    onClick={() => setEditingPost(post)}
+                    className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-4 cursor-pointer hover:shadow-lg transition-all group"
+                  >
+                    {post.image_url && (
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        className="mb-4 overflow-hidden rounded-xl"
+                      >
+                        <img
+                          src={post.image_url}
+                          alt={post.heading}
+                          className="w-full h-48 object-cover rounded-xl shadow-lg border-2 border-white/50 group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      </motion.div>
+                    )}
+                    <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2">
+                      {post.heading}
+                    </h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`inline-flex px-3 py-1.5 text-xs font-bold rounded-full ${getStatusColor(
+                          post.status
+                        )}`}
+                      >
+                        {post.status}
+                      </span>
                     </div>
-                  )}
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-2">
-                    {post.heading}
-                  </h3>
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        post.status
-                      )}`}
-                    >
-                      {post.status}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-500 space-y-1">
-                    <p>
-                      <span className="font-medium">Created:</span> {formatDate(post.created_at)}
-                    </p>
-                    <p>
-                      <span className="font-medium">Updated:</span> {formatDate(post.updated_at)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                    <div className="text-xs text-slate-500 space-y-1">
+                      <p>
+                        <span className="font-semibold">Created:</span> {formatDate(post.created_at)}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Updated:</span> {formatDate(post.updated_at)}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {editingPost && (

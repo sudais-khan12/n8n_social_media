@@ -13,7 +13,7 @@ interface Post {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url: string | null;
   status: string;
 }
@@ -35,7 +35,7 @@ export default function EditPostModal({
     hookline: post.hookline,
     cta: post.cta,
     hashtags: post.hashtags.join(", "),
-    social: post.social.join(", "),
+    social: post.social || "",
     image_url: post.image_url ?? "",
   });
   const [newImage, setNewImage] = useState<File | null>(null);
@@ -152,10 +152,7 @@ export default function EditPostModal({
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
-        social: formData.social
-          .split(",")
-          .map((platform) => platform.trim())
-          .filter((platform) => platform.length > 0),
+        social: formData.social.trim(),
         image_url: imageUrl,
         status: newStatus,
       });

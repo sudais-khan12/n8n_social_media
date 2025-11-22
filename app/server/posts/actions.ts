@@ -10,7 +10,7 @@ interface PostWithUser {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url: string | null;
   status: string;
   comment: string | null;
@@ -76,7 +76,7 @@ export async function updatePost(
     hookline?: string;
     cta?: string;
     hashtags?: string[];
-    social?: string[];
+    social?: string;
     image_url?: string | null;
   }
 ) {

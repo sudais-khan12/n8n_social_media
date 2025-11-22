@@ -250,7 +250,7 @@ export async function createUserPost(input: {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url?: string | null;
 }) {
   try {
@@ -277,7 +277,7 @@ export async function createUserPost(input: {
 
     // Validate arrays
     const hashtagsArray = Array.isArray(hashtags) ? hashtags : [];
-    const socialArray = Array.isArray(social) ? social : [];
+    const socialString = typeof social === 'string' ? social : '';
 
     // User creates posts as "draft", status changes to "pending" when image is uploaded
     const { data: post, error } = await supabaseAdmin
@@ -289,7 +289,7 @@ export async function createUserPost(input: {
         hookline,
         cta,
         hashtags: hashtagsArray,
-        social: socialArray,
+        social: socialString,
         status: image_url ? "pending" : "draft",
         image_url: image_url || null,
       })
@@ -327,7 +327,7 @@ export async function updateUserPost(
     hookline?: string;
     cta?: string;
     hashtags?: string[];
-    social?: string[];
+    social?: string;
     image_url?: string | null;
     status?: string;
   }
@@ -381,7 +381,7 @@ export async function updateUserPost(
     if (input.hashtags !== undefined)
       updates.hashtags = Array.isArray(input.hashtags) ? input.hashtags : [];
     if (input.social !== undefined)
-      updates.social = Array.isArray(input.social) ? input.social : [];
+      updates.social = typeof input.social === 'string' ? input.social : '';
     if (input.image_url !== undefined) updates.image_url = input.image_url;
     if (input.status !== undefined) updates.status = input.status;
 
