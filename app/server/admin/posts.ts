@@ -10,7 +10,7 @@ interface Post {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url: string | null;
   status: string;
   comment: string | null;
@@ -25,7 +25,7 @@ interface CreatePostInput {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url?: string | null;
 }
 
@@ -35,7 +35,7 @@ interface UpdatePostInput {
   hookline?: string;
   cta?: string;
   hashtags?: string[];
-  social?: string[];
+  social?: string;
   image_url?: string | null;
   status?: string; // Allow status update for auto-update logic (when image is added/removed)
   comment?: string | null; // Allow comment update (e.g., clear comment when rejected post is updated)
@@ -107,7 +107,7 @@ export async function createPost(input: CreatePostInput) {
 
     // Validate arrays
     const hashtagsArray = Array.isArray(hashtags) ? hashtags : [];
-    const socialArray = Array.isArray(social) ? social : [];
+    const socialString = typeof social === 'string' ? social : '';
 
     // Admin always creates posts as "draft"
     // Status will change to "pending" when user uploads an image
@@ -120,7 +120,7 @@ export async function createPost(input: CreatePostInput) {
         hookline,
         cta,
         hashtags: hashtagsArray,
-        social: socialArray,
+        social: socialString,
         status: "draft", // Always draft when admin creates
         image_url: image_url || null,
       })
@@ -190,7 +190,7 @@ export async function updatePost(postId: string, input: UpdatePostInput) {
     if (hashtags !== undefined)
       updates.hashtags = Array.isArray(hashtags) ? hashtags : [];
     if (social !== undefined)
-      updates.social = Array.isArray(social) ? social : [];
+      updates.social = typeof social === 'string' ? social : '';
     if (image_url !== undefined) updates.image_url = image_url;
     // Allow status update only for auto-update logic (when image is added/removed)
     if (status !== undefined) updates.status = status;

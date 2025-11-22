@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { X, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ToastProps {
   message: string;
@@ -21,10 +22,10 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
 
   const bgColor =
     type === "error"
-      ? "bg-red-50 border-red-200 text-red-800"
+      ? "bg-red-50/90 backdrop-blur-xl border-red-200/50 text-red-800"
       : type === "success"
-      ? "bg-green-50 border-green-200 text-green-800"
-      : "bg-blue-50 border-blue-200 text-blue-800";
+      ? "bg-green-50/90 backdrop-blur-xl border-green-200/50 text-green-800"
+      : "bg-blue-50/90 backdrop-blur-xl border-blue-200/50 text-blue-800";
 
   const iconColor =
     type === "error"
@@ -35,28 +36,46 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
 
   const Icon =
     type === "error" ? (
-      <ExclamationCircleIcon className={`w-5 h-5 ${iconColor}`} />
+      <AlertCircle className={`w-5 h-5 ${iconColor}`} />
     ) : type === "success" ? (
-      <CheckCircleIcon className={`w-5 h-5 ${iconColor}`} />
+      <CheckCircle2 className={`w-5 h-5 ${iconColor}`} />
     ) : (
-      <ExclamationCircleIcon className={`w-5 h-5 ${iconColor}`} />
+      <Info className={`w-5 h-5 ${iconColor}`} />
     );
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] animate-in slide-in-from-top-5">
-      <div
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border ${bgColor} min-w-[300px] max-w-md`}
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="fixed top-4 right-4 z-[9999]"
       >
-        {Icon}
-        <p className="flex-1 text-sm font-medium">{message}</p>
-        <button
-          onClick={onClose}
-          className={`p-1 rounded-lg hover:bg-black/10 transition-colors cursor-pointer ${iconColor}`}
+        <motion.div
+          className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-lg border-2 ${bgColor} min-w-[300px] max-w-md backdrop-blur-xl`}
+          whileHover={{ scale: 1.02 }}
         >
-          <XMarkIcon className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.4, type: "spring" }}
+          >
+            {Icon}
+          </motion.div>
+          <p className="flex-1 text-sm font-semibold">{message}</p>
+          <motion.button
+            onClick={onClose}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-lg hover:bg-black/10 transition-colors cursor-pointer ${iconColor}`}
+            type="button"
+          >
+            <X className="w-4 h-4" />
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

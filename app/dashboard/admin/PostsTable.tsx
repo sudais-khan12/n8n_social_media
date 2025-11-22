@@ -2,11 +2,73 @@
 
 import { useState, useEffect, useMemo } from "react";
 import {
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
+  Pencil,
+  Trash2,
+  Eye,
+  Search,
+  FileText,
+  Image as ImageIcon,
+} from "lucide-react";
+
+// Social Media Icons Component
+const SocialMediaIcons = ({ social }: { social: string }) => {
+  if (!social) return null;
+  
+  const socialLower = social.toLowerCase();
+  const icons: React.ReactElement[] = [];
+
+  if (socialLower.includes("facebook")) {
+    icons.push(
+      <svg
+        key="facebook"
+        className="w-5 h-5"
+        fill="#1877F2"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      </svg>
+    );
+  }
+
+  if (socialLower.includes("linkedin")) {
+    icons.push(
+      <svg
+        key="linkedin"
+        className="w-5 h-5"
+        fill="#0077B5"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      </svg>
+    );
+  }
+
+  if (socialLower.includes("gbp")) {
+    icons.push(
+      <svg
+        key="gbp"
+        className="w-5 h-5"
+        fill="#EA4335"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M17.5 8.5c0-2.485-2.015-4.5-4.5-4.5S8.5 6.015 8.5 8.5c0 2.485 2.015 4.5 4.5 4.5s4.5-2.015 4.5-4.5zM13 0C5.82 0 0 5.82 0 13s5.82 13 13 13 13-5.82 13-13S20.18 0 13 0zm0 23C6.925 23 2 18.075 2 12S6.925 1 13 1s11 4.925 11 11-4.925 11-11 11z" />
+        <path d="M12.5 6.5h-2v2h-2v2h2v2h2v-2h2v-2h-2v-2z" />
+      </svg>
+    );
+  }
+
+  if (icons.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {icons.map((icon) => icon)}
+    </div>
+  );
+};
+import { motion, AnimatePresence } from "framer-motion";
 import EditPostModal from "./EditPostModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import CommentModal from "./CommentModal";
@@ -23,7 +85,7 @@ interface Post {
   hookline: string;
   cta: string;
   hashtags: string[];
-  social: string[];
+  social: string;
   image_url: string | null;
   status: string;
   comment: string | null;
@@ -39,12 +101,14 @@ interface PostsTableProps {
   initialPosts: Post[];
   onRefresh: () => void;
   statusFilter?: string | null;
+  socialFilter?: string | null;
 }
 
 export default function PostsTable({
   initialPosts,
   onRefresh,
   statusFilter = null,
+  socialFilter = null,
 }: PostsTableProps) {
   const [posts, setPosts] = useState(initialPosts);
 
@@ -73,7 +137,7 @@ export default function PostsTable({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Filter posts based on search query and status filter
+  // Filter posts based on search query, status filter, and social filter
   const filteredPosts = useMemo(() => {
     let filtered = posts;
 
@@ -82,18 +146,27 @@ export default function PostsTable({
       filtered = filtered.filter((post) => post.status === statusFilter);
     }
 
+    // Apply social filter
+    if (socialFilter) {
+      filtered = filtered.filter((post) => {
+        const socialValue = post.social?.toLowerCase() || '';
+        return socialValue.includes(socialFilter.toLowerCase());
+      });
+    }
+
     // Apply search query
     if (debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter((post) => {
         const matchesTitle = post.heading?.toLowerCase().includes(query);
         const matchesStatus = post.status?.toLowerCase().includes(query);
-        return matchesTitle || matchesStatus;
+        const matchesSocial = post.social?.toLowerCase().includes(query);
+        return matchesTitle || matchesStatus || matchesSocial;
       });
     }
 
     return filtered;
-  }, [posts, debouncedSearchQuery, statusFilter]);
+  }, [posts, debouncedSearchQuery, statusFilter, socialFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -144,222 +217,306 @@ export default function PostsTable({
   return (
     <>
       {/* Search Bar */}
-      <div className="mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-6"
+      >
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search posts by title or status..."
+            placeholder="Search posts by title, status, or social type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white/80 backdrop-blur-lg border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all"
+            className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-xl border-2 border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all hover:shadow-md"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="hidden md:block bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-indigo-50 to-blue-50">
+            <thead className="bg-gradient-to-r from-indigo-50/80 via-blue-50/80 to-purple-50/80 backdrop-blur-sm">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Heading
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Image
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredPosts.map((post) => (
-                <tr
-                  key={post.id}
-                  className="hover:bg-indigo-50/50 transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">
-                      {post.users?.username || "Unknown"}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-slate-900 max-w-xs truncate">
+            <tbody className="divide-y divide-slate-100/50">
+              <AnimatePresence>
+                {filteredPosts.map((post, index) => (
+                  <motion.tr
+                    key={post.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    className="hover:bg-indigo-50/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-slate-900">
+                        {post.users?.username || "Unknown"}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-slate-900 max-w-xs truncate font-medium">
+                          {post.heading}
+                        </div>
+                        <SocialMediaIcons social={post.social} />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-3 py-1.5 text-xs font-bold rounded-full ${getStatusColor(
+                          post.status
+                        )}`}
+                      >
+                        {post.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {post.image_url ? (
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          className="inline-block"
+                        >
+                          <img
+                            src={post.image_url}
+                            alt={post.heading}
+                            className="h-14 w-14 object-cover rounded-xl shadow-lg border-2 border-white/50"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        </motion.div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <ImageIcon className="w-4 h-4" />
+                          <span>No image</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
+                      {formatDate(post.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        {post.status === "pending" && (
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setUpdatingStatusPostId(post.id)}
+                            className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-xl transition-colors shadow-sm cursor-pointer"
+                            title="Review"
+                          >
+                            <FileText className="w-5 h-5" />
+                          </motion.button>
+                        )}
+                        {post.status === "rejected" && post.comment && (
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setViewingCommentPost(post)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors shadow-sm cursor-pointer"
+                            title="View comment"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </motion.button>
+                        )}
+                        {post.status !== "posted" && (
+                          <>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setEditingPost(post)}
+                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors shadow-sm cursor-pointer"
+                              title="Edit"
+                            >
+                              <Pencil className="w-5 h-5" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setDeletingPostId(post.id)}
+                              disabled={loading === post.id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </motion.button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
+        {filteredPosts.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
+          >
+            <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-500 font-medium">
+              {debouncedSearchQuery.trim() ? "No results found." : "No posts found. Create your first post!"}
+            </p>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        <AnimatePresence>
+          {filteredPosts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+              onClick={() => setViewingPostDetail(post)}
+              className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-4 cursor-pointer hover:shadow-lg transition-all"
+            >
+              <div className="flex gap-4">
+                {post.image_url && (
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="flex-shrink-0"
+                  >
+                    <img
+                      src={post.image_url}
+                      alt={post.heading}
+                      className="h-24 w-24 object-cover rounded-xl shadow-lg border-2 border-white/50"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </motion.div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="text-sm font-bold text-slate-900 truncate flex-1">
                       {post.heading}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                    </h3>
+                    {!post.image_url && (
+                      <div className="flex-shrink-0">
+                        <SocialMediaIcons social={post.social} />
+                      </div>
+                    )}
                     <span
-                      className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                      className={`flex-shrink-0 inline-flex px-2.5 py-1 text-xs font-bold rounded-full ${getStatusColor(
                         post.status
                       )}`}
                     >
                       {post.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {post.image_url ? (
-                      <img
-                        src={post.image_url}
-                        alt={post.heading}
-                        className="h-12 w-12 object-cover rounded-lg shadow-md"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-400">No image</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    {formatDate(post.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
-                      {post.status === "rejected" && post.comment && (
-                        <button
-                          onClick={() => setViewingCommentPost(post)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="View comment"
-                        >
-                          <EyeIcon className="w-5 h-5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setEditingPost(post)}
-                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <PencilIcon className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingPostId(post.id)}
-                        disabled={loading === post.id}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        title="Delete"
-                      >
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filteredPosts.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
-            {debouncedSearchQuery.trim() ? "No results found." : "No posts found. Create your first post!"}
-          </div>
-        )}
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
-        {filteredPosts.map((post) => (
-          <div
-            key={post.id}
-            onClick={() => setViewingPostDetail(post)}
-            className="bg-white/70 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-4 cursor-pointer hover:shadow-xl transition-shadow"
-          >
-            <div className="flex gap-4">
-              {post.image_url && (
-                <div className="flex-shrink-0">
-                  <img
-                    src={post.image_url}
-                    alt={post.heading}
-                    className="h-20 w-20 object-cover rounded-lg shadow-md"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-slate-900 truncate">
-                    {post.heading}
-                  </h3>
-                  <span
-                    className={`flex-shrink-0 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                      post.status
-                    )}`}
-                  >
-                    {post.status}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 mb-2">
-                  {post.users?.username || "Unknown"}
-                </p>
-                <p className="text-xs text-slate-500 line-clamp-2">
-                  {post.caption}
-                </p>
+                  </div>
+                  <p className="text-xs text-slate-600 mb-2 font-medium">
+                    {post.users?.username || "Unknown"}
+                  </p>
+                  <p className="text-xs text-slate-500 line-clamp-2 mb-3">
+                    {post.caption}
+                  </p>
                   <div className="flex items-center gap-2 mt-3">
                     {post.status === "pending" && (
-                      <button
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setUpdatingStatusPostId(post.id);
                         }}
-                        className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-lg hover:from-yellow-600 hover:to-amber-700 transition-all shadow-sm cursor-pointer"
                         title="Update Status"
                       >
                         Review
-                      </button>
+                      </motion.button>
                     )}
                     {post.status === "rejected" && post.comment && (
-                      <button
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setViewingCommentPost(post);
                         }}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors shadow-sm cursor-pointer"
                         title="View comment"
                       >
-                        <EyeIcon className="w-4 h-4" />
-                      </button>
+                        <Eye className="w-4 h-4" />
+                      </motion.button>
                     )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingPost(post);
-                      }}
-                      className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingPostId(post.id);
-                      }}
-                      disabled={loading === post.id}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="Delete"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                    {post.status !== "posted" && (
+                      <>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingPost(post);
+                          }}
+                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors shadow-sm cursor-pointer"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingPostId(post.id);
+                          }}
+                          disabled={loading === post.id}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </motion.button>
+                      </>
+                    )}
                   </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
         {filteredPosts.length === 0 && (
-          <div className="text-center py-12 text-slate-500 bg-white/70 backdrop-blur-lg rounded-xl">
-            {debouncedSearchQuery.trim() ? "No results found." : "No posts found. Create your first post!"}
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16 text-slate-500 bg-white/70 backdrop-blur-xl rounded-2xl"
+          >
+            <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <p className="font-medium">
+              {debouncedSearchQuery.trim() ? "No results found." : "No posts found. Create your first post!"}
+            </p>
+          </motion.div>
         )}
       </div>
 

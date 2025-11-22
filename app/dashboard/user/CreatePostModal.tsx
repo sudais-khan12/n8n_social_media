@@ -111,10 +111,7 @@ export default function CreatePostModal({
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
-        social: formData.social
-          .split(",")
-          .map((platform) => platform.trim())
-          .filter((platform) => platform.length > 0),
+        social: formData.social.trim(),
         image_url: imageUrl,
       });
 
