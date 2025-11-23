@@ -15,6 +15,7 @@ import {
   Key,
   Circle,
   User as UserIcon,
+  Upload,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { logoutUser } from "@/app/server/auth/logout";
@@ -182,6 +183,15 @@ export default function AdminDashboard({
                   >
                     <Users className="w-5 h-5" />
                     <span>Users</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => router.push("/dashboard/admin/bulk-upload")}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600 cursor-pointer"
+                  >
+                    <Upload className="w-5 h-5" />
+                    <span>Bulk Upload Posts</span>
                   </motion.button>
                 </div>
 
