@@ -16,6 +16,7 @@ interface Post {
   social: string;
   image_url: string | null;
   status: string;
+  comment?: string | null;
 }
 
 interface EditPostModalProps {
@@ -60,7 +61,7 @@ export default function EditPostModal({
     const file = e.target.files?.[0];
     if (file) {
       setNewImage(file);
-      
+
       // Create preview using URL.createObjectURL
       if (imagePreview && imagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(imagePreview);
@@ -136,7 +137,7 @@ export default function EditPostModal({
       let newComment: string | null | undefined = undefined;
       const hadImage = !!post.image_url;
       const hasImage = !!imageUrl;
-      
+
       // If post is rejected, change status to pending and clear comment when updated
       if (post.status === "rejected") {
         newStatus = "pending";
@@ -189,7 +190,9 @@ export default function EditPostModal({
         setError(result.error || "Failed to update post");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +214,9 @@ export default function EditPostModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
             <p className="text-sm text-slate-700">
-              <strong>Status:</strong> <span className="font-semibold">{post.status}</span> (Use status update controls in the posts table to change status)
+              <strong>Status:</strong>{" "}
+              <span className="font-semibold">{post.status}</span> (Use status
+              update controls in the posts table to change status)
             </p>
           </div>
 
@@ -384,7 +389,11 @@ export default function EditPostModal({
               disabled={isLoading || uploadingImage}
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-500/50"
             >
-              {isLoading ? "Saving..." : uploadingImage ? "Uploading..." : "Save Changes"}
+              {isLoading
+                ? "Saving..."
+                : uploadingImage
+                ? "Uploading..."
+                : "Save Changes"}
             </button>
           </div>
         </form>
