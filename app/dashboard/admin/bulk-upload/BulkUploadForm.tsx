@@ -142,7 +142,7 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 via-indigo-50 to-purple-50">
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -166,10 +166,10 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
             </svg>
             <span>Back to Dashboard</span>
           </motion.button>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent mb-2">
             Bulk Upload Posts
           </h1>
-          <p className="text-slate-600 mt-2">Upload Excel or CSV files to send post data to n8n webhook</p>
+          <p className="text-sm sm:text-base text-slate-600 mt-2">Upload Excel or CSV files to send post data to n8n webhook</p>
         </motion.div>
 
         {/* Form Card */}
@@ -177,7 +177,7 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-6 sm:p-8"
+          className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-4 sm:p-6 lg:p-8"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* User Selection */}
@@ -191,7 +191,7 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
                 disabled={isLoading}
-                className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-medium"
+                className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-medium text-base"
                 required
               >
                 <option value="">-- Select a user --</option>
@@ -220,7 +220,7 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
                 />
                 <label
                   htmlFor="file-input"
-                  className={`flex items-center justify-center gap-3 px-6 py-4 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                  className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-2 border-dashed rounded-xl cursor-pointer transition-all text-sm sm:text-base ${
                     isLoading || !selectedUserId
                       ? "border-slate-200 bg-slate-50 cursor-not-allowed opacity-50"
                       : "border-indigo-300 bg-indigo-50/50 hover:border-indigo-500 hover:bg-indigo-100/50"
@@ -261,7 +261,7 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
               disabled={isLoading || !selectedUserId || !selectedFile}
               whileHover={{ scale: isLoading ? 1 : 1.02 }}
               whileTap={{ scale: isLoading ? 1 : 0.98 }}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-sm sm:text-base"
             >
               {isLoading ? (
                 <>
@@ -283,13 +283,13 @@ export default function BulkUploadForm({ initialUsers, username }: BulkUploadFor
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mt-6 bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-6"
+          className="mt-4 sm:mt-6 bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-4 sm:p-6"
         >
-          <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-indigo-600" />
+          <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
             Instructions
           </h3>
-          <ul className="space-y-2 text-sm text-slate-700">
+          <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
             <li className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
               <span>Select a user from the dropdown before uploading a file</span>

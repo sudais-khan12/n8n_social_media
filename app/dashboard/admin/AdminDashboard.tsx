@@ -69,6 +69,8 @@ export default function AdminDashboard({
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const router = useRouter();
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Set up Supabase realtime subscriptions
   useEffect(() => {
     const supabase = createClient();
@@ -83,9 +85,12 @@ export default function AdminDashboard({
           schema: "public",
           table: "posts",
         },
-        () => {
+        (payload) => {
           // Refresh the page data when posts change
+          setIsRefreshing(true);
           router.refresh();
+          // Reset loading state after a short delay
+          setTimeout(() => setIsRefreshing(false), 500);
         }
       )
       .subscribe();
@@ -100,9 +105,12 @@ export default function AdminDashboard({
           schema: "public",
           table: "users",
         },
-        () => {
+        (payload) => {
           // Refresh the page data when users change
+          setIsRefreshing(true);
           router.refresh();
+          // Reset loading state after a short delay
+          setTimeout(() => setIsRefreshing(false), 500);
         }
       )
       .subscribe();
@@ -114,7 +122,9 @@ export default function AdminDashboard({
   }, [router]);
 
   const handleRefresh = () => {
+    setIsRefreshing(true);
     router.refresh();
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
   const handleLogout = async () => {
@@ -156,223 +166,175 @@ export default function AdminDashboard({
               </div>
 
               {/* Navigation */}
-              <nav className="flex-1 px-4 py-6 space-y-2 flex flex-col">
-                <div className="space-y-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+              <nav className="flex-1 px-3 py-4 space-y-1 flex flex-col overflow-y-auto">
+                <div className="space-y-1">
+                  <button
                     onClick={() => setActiveTab("posts")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       activeTab === "posts"
-                        ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-4 h-4" />
                     <span>Posts</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setActiveTab("users")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       activeTab === "users"
-                        ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Users className="w-5 h-5" />
+                    <Users className="w-4 h-4" />
                     <span>Users</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => router.push("/dashboard/admin/bulk-upload")}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600 cursor-pointer"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-slate-100 cursor-pointer"
                   >
-                    <Upload className="w-5 h-5" />
-                    <span>Bulk Upload Posts</span>
-                  </motion.button>
+                    <Upload className="w-4 h-4" />
+                    <span>Bulk Upload</span>
+                  </button>
                 </div>
 
                 {/* Post Status Filters - Only show when Posts tab is active */}
-                <AnimatePresence>
-                  {activeTab === "posts" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-2 pt-4 border-t border-slate-200/50 overflow-hidden"
+                {activeTab === "posts" && (
+                  <div className="space-y-1 pt-3 border-t border-slate-200">
+                    <button
+                      onClick={() => setStatusFilter(null)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        statusFilter === null
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
                     >
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setStatusFilter(null)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          statusFilter === null
-                            ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
-                        }`}
-                      >
-                        <FileText className="w-5 h-5" />
-                        <span>All Posts</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setStatusFilter("pending")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          statusFilter === "pending"
-                            ? "bg-gradient-to-r from-yellow-500 via-amber-600 to-orange-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-yellow-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-yellow-500 text-yellow-500" />
-                        <span>Pending</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setStatusFilter("approved")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          statusFilter === "approved"
-                            ? "bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-green-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-green-500 text-green-500" />
-                        <span>Approved</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setStatusFilter("rejected")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          statusFilter === "rejected"
-                            ? "bg-gradient-to-r from-red-500 via-rose-600 to-pink-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-red-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-red-500 text-red-500" />
-                        <span>Rejected</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setStatusFilter("posted")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          statusFilter === "posted"
-                            ? "bg-gradient-to-r from-blue-500 via-cyan-600 to-sky-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-blue-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-blue-500 text-blue-500" />
-                        <span>Posted</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setStatusFilter("draft")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          statusFilter === "draft"
-                            ? "bg-gradient-to-r from-slate-500 via-slate-600 to-slate-700 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-slate-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-slate-500 text-slate-500" />
-                        <span>Draft</span>
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <FileText className="w-4 h-4" />
+                      <span>All Posts</span>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("pending")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        statusFilter === "pending"
+                          ? "bg-yellow-500 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Circle className="w-2 h-2 fill-current" />
+                      <span>Pending</span>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("approved")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        statusFilter === "approved"
+                          ? "bg-green-500 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Circle className="w-2 h-2 fill-current" />
+                      <span>Approved</span>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("rejected")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        statusFilter === "rejected"
+                          ? "bg-red-500 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Circle className="w-2 h-2 fill-current" />
+                      <span>Rejected</span>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("posted")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        statusFilter === "posted"
+                          ? "bg-blue-500 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Circle className="w-2 h-2 fill-current" />
+                      <span>Posted</span>
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter("draft")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        statusFilter === "draft"
+                          ? "bg-slate-500 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Circle className="w-2 h-2 fill-current" />
+                      <span>Draft</span>
+                    </button>
+                  </div>
+                )}
                 
                 {/* Social Media Filters - Only show when Posts tab is active */}
-                <AnimatePresence>
-                  {activeTab === "posts" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-2 pt-4 border-t border-slate-200/50 overflow-hidden"
+                {activeTab === "posts" && (
+                  <div className="space-y-1 pt-3 border-t border-slate-200">
+                    <p className="px-3 text-xs font-semibold text-slate-500 uppercase mb-1">Social</p>
+                    <button
+                      onClick={() => setSocialFilter(null)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        socialFilter === null
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
                     >
-                      <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Social Media</p>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSocialFilter(null)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          socialFilter === null
-                            ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
-                        }`}
-                      >
-                        <FileText className="w-5 h-5" />
-                        <span>All Social</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSocialFilter("Facebook")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          socialFilter === "Facebook"
-                            ? "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-blue-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-blue-600 text-blue-600" />
-                        <span>Facebook</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSocialFilter("GBP")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          socialFilter === "GBP"
-                            ? "bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-red-600"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-red-500 text-red-500" />
-                        <span>GBP</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02, x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSocialFilter("LinkedIn")}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
-                          socialFilter === "LinkedIn"
-                            ? "bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white shadow-md"
-                            : "text-slate-700 hover:bg-slate-100/80 hover:text-blue-700"
-                        }`}
-                      >
-                        <Circle className="w-2 h-2 fill-blue-700 text-blue-700" />
-                        <span>LinkedIn</span>
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                {/* Change Password Button */}
-                <motion.button
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowChangePassword(true)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer"
-                >
-                  <Key className="w-5 h-5" />
-                  <span>Change Password</span>
-                </motion.button>
-                {/* Logout Button */}
-                <motion.button
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-slate-700 hover:bg-red-50 hover:text-red-600 mt-auto cursor-pointer"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </motion.button>
+                      <span>All</span>
+                    </button>
+                    <button
+                      onClick={() => setSocialFilter("Facebook")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        socialFilter === "Facebook"
+                          ? "bg-blue-600 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <span>Facebook</span>
+                    </button>
+                    <button
+                      onClick={() => setSocialFilter("GBP")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        socialFilter === "GBP"
+                          ? "bg-red-500 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <span>GBP</span>
+                    </button>
+                    <button
+                      onClick={() => setSocialFilter("LinkedIn")}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                        socialFilter === "LinkedIn"
+                          ? "bg-blue-700 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <span>LinkedIn</span>
+                    </button>
+                  </div>
+                )}
+                
+                {/* Bottom Actions */}
+                <div className="pt-3 border-t border-slate-200 space-y-1">
+                  <button
+                    onClick={() => setShowChangePassword(true)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <Key className="w-4 h-4" />
+                    <span>Change Password</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </nav>
             </motion.div>
           </div>
@@ -387,21 +349,21 @@ export default function AdminDashboard({
             transition={{ duration: 0.3 }}
             className="bg-white/70 backdrop-blur-2xl border-b border-white/30 shadow-lg z-10"
           >
-            <div className="flex items-center justify-between px-6 py-4">
-              <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 sm:px-6 py-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent truncate">
                   {activeTab === "posts" ? "Posts Management" : "Users Management"}
                 </h2>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
                   {activeTab === "posts"
                     ? "Manage and review all posts"
                     : "Manage user accounts and permissions"}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-white/30">
-                  <UserIcon className="w-5 h-5 text-indigo-600" />
-                  <span className="font-semibold text-slate-900">{username}</span>
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-white/30 flex-1 sm:flex-initial">
+                  <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
+                  <span className="font-semibold text-slate-900 text-sm sm:text-base truncate">{username}</span>
                 </div>
                 <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -413,12 +375,13 @@ export default function AdminDashboard({
                     setShowCreateUser(true);
                   }
                 }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold cursor-pointer"
+                className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold cursor-pointer text-sm sm:text-base flex-shrink-0"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="hidden sm:inline">
                   Create {activeTab === "posts" ? "Post" : "User"}
                 </span>
+                <span className="sm:hidden">Create</span>
               </motion.button>
               </div>
             </div>
@@ -431,7 +394,7 @@ export default function AdminDashboard({
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="lg:hidden px-6 pb-4 overflow-hidden"
+                  className="lg:hidden px-4 sm:px-6 pb-4 overflow-hidden"
                 >
                   <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <motion.button
@@ -564,7 +527,7 @@ export default function AdminDashboard({
             </AnimatePresence>
 
             {/* Mobile Logout and Change Password */}
-            <div className="lg:hidden px-6 pb-4 flex gap-2 border-t border-slate-200/50 pt-4">
+            <div className="lg:hidden px-4 sm:px-6 pb-4 flex gap-2 border-t border-slate-200/50 pt-4">
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowChangePassword(true)}
@@ -585,14 +548,31 @@ export default function AdminDashboard({
           </motion.header>
 
           {/* Content Area */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+            {/* Loading Overlay */}
+            {isRefreshing && (
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 flex flex-col items-center gap-4"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full"
+                  />
+                  <p className="text-sm font-semibold text-slate-700">Updating...</p>
+                </motion.div>
+              </div>
+            )}
             <div className="max-w-7xl mx-auto">
               {/* Mobile Tabs */}
-              <div className="lg:hidden mb-6 flex gap-2 bg-white/70 backdrop-blur-2xl rounded-xl p-2 shadow-md border border-white/30">
+              <div className="lg:hidden mb-4 sm:mb-6 flex gap-2 bg-white/70 backdrop-blur-2xl rounded-xl p-2 shadow-md border border-white/30">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab("posts")}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold transition-all cursor-pointer text-sm sm:text-base ${
                     activeTab === "posts"
                       ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
                       : "text-slate-700 hover:bg-slate-100"
@@ -604,7 +584,7 @@ export default function AdminDashboard({
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab("users")}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-semibold transition-all cursor-pointer text-sm sm:text-base ${
                     activeTab === "users"
                       ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
                       : "text-slate-700 hover:bg-slate-100"

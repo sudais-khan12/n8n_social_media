@@ -46,6 +46,7 @@ export default function UserDashboard({
   const [socialFilter, setSocialFilter] = useState<string | null>(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
 
   // Set up Supabase realtime subscriptions
@@ -62,9 +63,12 @@ export default function UserDashboard({
           schema: "public",
           table: "posts",
         },
-        () => {
+        (payload) => {
           // Refresh the page data when posts change
+          setIsRefreshing(true);
           router.refresh();
+          // Reset loading state after a short delay
+          setTimeout(() => setIsRefreshing(false), 500);
         }
       )
       .subscribe();
@@ -75,7 +79,9 @@ export default function UserDashboard({
   }, [router]);
 
   const handleRefresh = () => {
+    setIsRefreshing(true);
     router.refresh();
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
   const handleLogout = async () => {
@@ -117,152 +123,127 @@ export default function UserDashboard({
               </div>
 
               {/* Navigation */}
-              <nav className="flex-1 px-4 py-6 space-y-2 flex flex-col">
-                <div className="space-y-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+              <nav className="flex-1 px-3 py-4 space-y-1 flex flex-col overflow-y-auto">
+                <div className="space-y-1">
+                  <button
                     onClick={() => setStatusFilter(null)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       statusFilter === null
-                        ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-4 h-4" />
                     <span>All Posts</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setStatusFilter("pending")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       statusFilter === "pending"
-                        ? "bg-gradient-to-r from-yellow-500 via-amber-600 to-orange-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-yellow-600"
+                        ? "bg-yellow-500 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-yellow-500 text-yellow-500" />
+                    <Circle className="w-2 h-2 fill-current" />
                     <span>Pending</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setStatusFilter("approved")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       statusFilter === "approved"
-                        ? "bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-green-600"
+                        ? "bg-green-500 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-green-500 text-green-500" />
+                    <Circle className="w-2 h-2 fill-current" />
                     <span>Approved</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setStatusFilter("rejected")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       statusFilter === "rejected"
-                        ? "bg-gradient-to-r from-red-500 via-rose-600 to-pink-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-red-600"
+                        ? "bg-red-500 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-red-500 text-red-500" />
+                    <Circle className="w-2 h-2 fill-current" />
                     <span>Rejected</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setStatusFilter("posted")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       statusFilter === "posted"
-                        ? "bg-gradient-to-r from-blue-500 via-cyan-600 to-sky-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-blue-600"
+                        ? "bg-blue-500 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-blue-500 text-blue-500" />
+                    <Circle className="w-2 h-2 fill-current" />
                     <span>Posted</span>
-                  </motion.button>
+                  </button>
                 </div>
                 
                 {/* Social Media Filters */}
-                <div className="space-y-2 pt-4 border-t border-slate-200/50">
-                  <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Social Media</p>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                <div className="space-y-1 pt-3 border-t border-slate-200">
+                  <p className="px-3 text-xs font-semibold text-slate-500 uppercase mb-1">Social</p>
+                  <button
                     onClick={() => setSocialFilter(null)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       socialFilter === null
-                        ? "bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-indigo-600"
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <FileText className="w-5 h-5" />
-                    <span>All Social</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                    <span>All</span>
+                  </button>
+                  <button
                     onClick={() => setSocialFilter("Facebook")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       socialFilter === "Facebook"
-                        ? "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-blue-600"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-blue-600 text-blue-600" />
                     <span>Facebook</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setSocialFilter("GBP")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       socialFilter === "GBP"
-                        ? "bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-red-600"
+                        ? "bg-red-500 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-red-500 text-red-500" />
                     <span>GBP</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     onClick={() => setSocialFilter("LinkedIn")}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                       socialFilter === "LinkedIn"
-                        ? "bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white shadow-md"
-                        : "text-slate-700 hover:bg-slate-100/80 hover:text-blue-700"
+                        ? "bg-blue-700 text-white"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Circle className="w-2 h-2 fill-blue-700 text-blue-700" />
                     <span>LinkedIn</span>
-                  </motion.button>
+                  </button>
                 </div>
                 
-                {/* Change Password Button */}
-                <motion.button
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowChangePassword(true)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer"
-                >
-                  <Key className="w-5 h-5" />
-                  <span>Change Password</span>
-                </motion.button>
-                {/* Logout Button */}
-                <motion.button
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-slate-700 hover:bg-red-50 hover:text-red-600 mt-auto cursor-pointer"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </motion.button>
+                {/* Bottom Actions */}
+                <div className="pt-3 border-t border-slate-200 space-y-1">
+                  <button
+                    onClick={() => setShowChangePassword(true)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <Key className="w-4 h-4" />
+                    <span>Change Password</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </nav>
             </motion.div>
           </div>
@@ -277,16 +258,16 @@ export default function UserDashboard({
             transition={{ duration: 0.3 }}
             className="bg-white/70 backdrop-blur-2xl border-b border-white/30 shadow-lg z-10"
           >
-            <div className="flex items-center justify-between px-6 py-4">
-              <div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">My Posts</h2>
-                <p className="text-sm text-slate-600 mt-1">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 sm:px-6 py-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">My Posts</h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
                   Review and manage your posts
                 </p>
               </div>
-              <div className="flex items-center gap-3 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-white/30">
-                <UserIcon className="w-5 h-5 text-indigo-600" />
-                <span className="font-semibold text-slate-900">{username}</span>
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-white/30 w-full sm:w-auto">
+                <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
+                <span className="font-semibold text-slate-900 text-sm sm:text-base truncate">{username}</span>
               </div>
             </div>
             
@@ -297,7 +278,7 @@ export default function UserDashboard({
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="lg:hidden px-6 pb-4 overflow-hidden"
+                className="lg:hidden px-4 sm:px-6 pb-4 overflow-hidden"
               >
                 <div className="flex gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mb-4">
                   <motion.button
@@ -438,7 +419,24 @@ export default function UserDashboard({
           </motion.header>
 
           {/* Content Area */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+            {/* Loading Overlay */}
+            {isRefreshing && (
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 flex flex-col items-center gap-4"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full"
+                  />
+                  <p className="text-sm font-semibold text-slate-700">Updating...</p>
+                </motion.div>
+              </div>
+            )}
             <div className="max-w-7xl mx-auto">
               <PostsList initialPosts={initialPosts} onRefresh={handleRefresh} statusFilter={statusFilter} socialFilter={socialFilter} />
             </div>

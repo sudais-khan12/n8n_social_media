@@ -10,6 +10,7 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
 } from "@heroicons/react/24/outline";
+import { Loader2 } from "lucide-react";
 import EditUserModal from "./EditUserModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import Toast from "@/app/components/Toast";
@@ -43,16 +44,26 @@ export default function UsersTable({
   const [loading, setLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
 
   // Debounce search query
   useEffect(() => {
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+    }
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
+      setIsSearching(false);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (!searchQuery.trim()) {
+        setIsSearching(false);
+      }
+    };
   }, [searchQuery]);
 
   // Filter users based on search query
@@ -63,23 +74,51 @@ export default function UsersTable({
 
     const query = debouncedSearchQuery.toLowerCase();
     return users.filter((user) => {
-      return user.username?.toLowerCase().includes(query);
+      const matchesUsername = user.username?.toLowerCase().includes(query);
+      const matchesRole = user.role?.toLowerCase().includes(query);
+      const matchesId = user.id?.toLowerCase().includes(query);
+      // Also search in formatted date string
+      const formattedDate = new Date(user.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).toLowerCase();
+      const matchesDate = formattedDate.includes(query);
+      return matchesUsername || matchesRole || matchesId || matchesDate;
     });
   }, [users, debouncedSearchQuery]);
 
   const handleDelete = async (userId: string) => {
     setLoading(userId);
+    // Optimistic update - remove from UI immediately
+    const userToDelete = users.find((u) => u.id === userId);
+    setUsers(users.filter((u) => u.id !== userId));
+    setDeletingUserId(null);
+    
     try {
       const result = await deleteUser(userId);
       if (result.success) {
-        setUsers(users.filter((u) => u.id !== userId));
-        setDeletingUserId(null);
         setToast({ message: "User deleted successfully!", type: "success" });
+        // Refresh to sync with server
         onRefresh();
       } else {
+        // Rollback on error
+        if (userToDelete) {
+          setUsers([...users, userToDelete].sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          ));
+        }
         setToast({ message: result.error || "Failed to delete user", type: "error" });
       }
     } catch (error) {
+      // Rollback on error
+      if (userToDelete) {
+        setUsers([...users, userToDelete].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ));
+      }
       setToast({ message: "An error occurred while deleting the user", type: "error" });
     } finally {
       setLoading(null);
@@ -111,32 +150,36 @@ export default function UsersTable({
       {/* Search Bar */}
       <div className="mb-6">
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          {isSearching ? (
+            <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-indigo-500 animate-spin" />
+          ) : (
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          )}
           <input
             type="text"
-            placeholder="Search users by username..."
+            placeholder="Search by username, role, user ID, or date..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white/80 backdrop-blur-lg border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all"
+            className="w-full pl-10 pr-4 py-3 bg-white/80 backdrop-blur-lg border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all text-base"
           />
         </div>
       </div>
 
       <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <table className="w-full min-w-[640px] sm:min-w-0">
             <thead className="bg-gradient-to-r from-indigo-50 to-blue-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Username
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   User ID
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Created
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -151,12 +194,12 @@ export default function UsersTable({
                   className="hover:bg-indigo-50/50 transition-colors cursor-pointer"
                   onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-slate-900">
                       {user.username}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <div className="text-xs font-mono text-slate-500">
                         {user.id}
@@ -174,7 +217,7 @@ export default function UsersTable({
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
                         user.role === "admin"

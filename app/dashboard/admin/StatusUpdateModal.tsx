@@ -10,7 +10,7 @@ interface StatusUpdateModalProps {
   postId: string;
   currentStatus: string;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (status?: string, comment?: string | null) => void;
 }
 
 export default function StatusUpdateModal({
@@ -47,7 +47,8 @@ export default function StatusUpdateModal({
       });
 
       if (result.success) {
-        onSuccess();
+        // Pass status and comment for optimistic update
+        onSuccess(status, status === "rejected" ? comment.trim() : null);
       } else {
         setError(result.error || "Failed to update status");
       }
@@ -73,10 +74,10 @@ export default function StatusUpdateModal({
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: "spring", duration: 0.4 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white/90 backdrop-blur-2xl rounded-3xl shadow-lg w-full max-w-md border border-white/30"
+          className="bg-white/90 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-lg w-full max-w-md border border-white/30 mx-4 sm:mx-0"
         >
-          <div className="border-b border-slate-200/50 px-6 py-5 flex justify-between items-center bg-gradient-to-r from-slate-50/50 to-white/50">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-indigo-900 bg-clip-text text-transparent">Update Post Status</h2>
+          <div className="border-b border-slate-200/50 px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center bg-gradient-to-r from-slate-50/50 to-white/50">
+            <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-900 to-indigo-900 bg-clip-text text-transparent">Update Post Status</h2>
             <motion.button
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
@@ -87,7 +88,7 @@ export default function StatusUpdateModal({
             </motion.button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-4">
                 Status <span className="text-red-500">*</span>
@@ -159,13 +160,13 @@ export default function StatusUpdateModal({
               )}
             </AnimatePresence>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/50">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-200/50">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors font-semibold cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors font-semibold cursor-pointer text-sm sm:text-base"
               >
                 Cancel
               </motion.button>
@@ -174,7 +175,7 @@ export default function StatusUpdateModal({
                 whileTap={{ scale: 0.95 }}
                 type="submit"
                 disabled={isLoading}
-                className={`px-6 py-2.5 text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer ${
+                className={`w-full sm:w-auto px-6 py-2.5 text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer text-sm sm:text-base ${
                   status === "approved"
                     ? "bg-gradient-to-r from-green-500 to-emerald-600 shadow-green-500/50"
                     : "bg-gradient-to-r from-red-500 to-rose-600 shadow-red-500/50"

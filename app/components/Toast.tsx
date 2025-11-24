@@ -50,10 +50,10 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.95 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="fixed top-4 right-4 z-[9999]"
+        className="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-md z-[9999]"
       >
         <motion.div
-          className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-lg border-2 ${bgColor} min-w-[300px] max-w-md backdrop-blur-xl`}
+          className={`flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg border-2 ${bgColor} w-full sm:min-w-[300px] sm:max-w-md backdrop-blur-xl`}
           whileHover={{ scale: 1.02 }}
         >
           <motion.div
@@ -63,7 +63,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
           >
             {Icon}
           </motion.div>
-          <p className="flex-1 text-sm font-semibold">{message}</p>
+          <p className="flex-1 text-sm sm:text-base font-semibold break-words">{message}</p>
           <motion.button
             onClick={onClose}
             whileHover={{ scale: 1.1, rotate: 90 }}

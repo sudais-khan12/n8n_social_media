@@ -41,7 +41,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-300/30 rounded-full blur-3xl animate-pulse"></div>
@@ -58,7 +58,7 @@ export default function LoginForm() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-white/70 backdrop-blur-2xl rounded-3xl shadow-lg border border-white/30 p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/70 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-lg border border-white/30 p-6 sm:p-8 md:p-10 relative overflow-hidden"
         >
           {/* Glassmorphism overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-white/20 pointer-events-none"></div>
@@ -79,10 +79,10 @@ export default function LoginForm() {
               >
                 <FileText className="w-10 h-10 text-white" />
               </motion.div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent mb-3">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent mb-3">
                 Welcome Back
               </h1>
-              <p className="text-slate-600 text-lg">Sign in to your account</p>
+              <p className="text-slate-600 text-base sm:text-lg">Sign in to your account</p>
             </motion.div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -106,7 +106,7 @@ export default function LoginForm() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="w-full px-4 py-3.5 pl-12 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+                    className="w-full px-4 py-3 sm:py-3.5 pl-12 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md text-base"
                     placeholder="Enter your username"
                   />
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -133,7 +133,7 @@ export default function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="w-full px-4 py-3.5 pl-12 pr-12 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+                    className="w-full px-4 py-3 sm:py-3.5 pl-12 pr-12 bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md text-base"
                     placeholder="Enter your password"
                   />
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -162,7 +162,7 @@ export default function LoginForm() {
                   disabled={isLoading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full px-6 py-3.5 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg relative overflow-hidden group cursor-pointer"
+                  className="w-full px-6 py-3.5 sm:py-4 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg relative overflow-hidden group cursor-pointer text-base"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {isLoading ? (

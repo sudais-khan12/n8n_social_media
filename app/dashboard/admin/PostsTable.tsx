@@ -8,6 +8,7 @@ import {
   Search,
   FileText,
   Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 
 // Social Media Icons Component
@@ -69,6 +70,7 @@ const SocialMediaIcons = ({ social }: { social: string }) => {
   );
 };
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/app/lib/supabase/client";
 import EditPostModal from "./EditPostModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import CommentModal from "./CommentModal";
@@ -116,6 +118,44 @@ export default function PostsTable({
   useEffect(() => {
     setPosts(initialPosts);
   }, [initialPosts]);
+
+  // Set up Supabase realtime subscription for direct updates
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel("posts-table-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "posts",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            // Add new post optimistically
+            const newPost = payload.new as Post;
+            setPosts((prev) => [newPost, ...prev]);
+          } else if (payload.eventType === "UPDATE" && payload.new) {
+            // Update existing post
+            const updatedPost = payload.new as Post;
+            setPosts((prev) =>
+              prev.map((p) => (p.id === updatedPost.id ? updatedPost : p))
+            );
+          } else if (payload.eventType === "DELETE" && payload.old) {
+            // Remove deleted post
+            const deletedId = payload.old.id;
+            setPosts((prev) => prev.filter((p) => p.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [viewingCommentPost, setViewingCommentPost] = useState<Post | null>(
@@ -126,15 +166,37 @@ export default function PostsTable({
   const [loading, setLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  // Function to update a post optimistically
+  const updatePostOptimistically = (postId: string, updates: Partial<Post>) => {
+    setPosts(posts.map((p) => 
+      p.id === postId ? { ...p, ...updates } : p
+    ));
+  };
+
+  // Function to add a new post optimistically
+  const addPostOptimistically = (newPost: Post) => {
+    setPosts([newPost, ...posts]);
+  };
 
   // Debounce search query
   useEffect(() => {
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+    }
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
+      setIsSearching(false);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (!searchQuery.trim()) {
+        setIsSearching(false);
+      }
+    };
   }, [searchQuery]);
 
   // Filter posts based on search query, status filter, and social filter
@@ -159,9 +221,12 @@ export default function PostsTable({
       const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter((post) => {
         const matchesTitle = post.heading?.toLowerCase().includes(query);
+        const matchesCaption = post.caption?.toLowerCase().includes(query);
         const matchesStatus = post.status?.toLowerCase().includes(query);
         const matchesSocial = post.social?.toLowerCase().includes(query);
-        return matchesTitle || matchesStatus || matchesSocial;
+        const matchesUsername = post.users?.username?.toLowerCase().includes(query);
+        const matchesHashtags = post.hashtags?.some((tag) => tag.toLowerCase().includes(query));
+        return matchesTitle || matchesCaption || matchesStatus || matchesSocial || matchesUsername || matchesHashtags;
       });
     }
 
@@ -187,17 +252,33 @@ export default function PostsTable({
 
   const handleDelete = async (postId: string) => {
     setLoading(postId);
+    // Optimistic update - remove from UI immediately
+    const postToDelete = posts.find((p) => p.id === postId);
+    setPosts(posts.filter((p) => p.id !== postId));
+    setDeletingPostId(null);
+    
     try {
       const result = await deletePost(postId);
       if (result.success) {
-        setPosts(posts.filter((p) => p.id !== postId));
-        setDeletingPostId(null);
         setToast({ message: "Post deleted successfully!", type: "success" });
+        // Refresh to sync with server
         onRefresh();
       } else {
+        // Rollback on error
+        if (postToDelete) {
+          setPosts([...posts, postToDelete].sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          ));
+        }
         setToast({ message: result.error || "Failed to delete post", type: "error" });
       }
     } catch (error) {
+      // Rollback on error
+      if (postToDelete) {
+        setPosts([...posts, postToDelete].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ));
+      }
       setToast({ message: "An error occurred while deleting the post", type: "error" });
     } finally {
       setLoading(null);
@@ -224,13 +305,17 @@ export default function PostsTable({
         className="mb-6"
       >
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          {isSearching ? (
+            <Loader2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-indigo-500 animate-spin" />
+          ) : (
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          )}
           <input
             type="text"
-            placeholder="Search posts by title, status, or social type..."
+            placeholder="Search by title, caption, status, social, username, hashtags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-xl border-2 border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all hover:shadow-md"
+            className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-white/80 backdrop-blur-xl border-2 border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all hover:shadow-md text-base"
           />
         </div>
       </motion.div>
@@ -308,7 +393,7 @@ export default function PostsTable({
                           <img
                             src={post.image_url}
                             alt={post.heading}
-                            className="h-14 w-14 object-cover rounded-xl shadow-lg border-2 border-white/50"
+                            className="h-14 w-14 object-contain rounded-xl shadow-lg border-2 border-white/50 bg-slate-50"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = "none";
                             }}
@@ -404,7 +489,7 @@ export default function PostsTable({
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2, delay: index * 0.05 }}
               onClick={() => setViewingPostDetail(post)}
-              className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-4 cursor-pointer hover:shadow-lg transition-all"
+              className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-all"
             >
               <div className="flex gap-4">
                 {post.image_url && (
@@ -415,7 +500,7 @@ export default function PostsTable({
                     <img
                       src={post.image_url}
                       alt={post.heading}
-                      className="h-24 w-24 object-cover rounded-xl shadow-lg border-2 border-white/50"
+                      className="h-24 w-24 object-contain rounded-xl shadow-lg border-2 border-white/50 bg-slate-50"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
@@ -424,21 +509,19 @@ export default function PostsTable({
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-sm font-bold text-slate-900 truncate flex-1">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate flex-1">
                       {post.heading}
                     </h3>
-                    {!post.image_url && (
-                      <div className="flex-shrink-0">
-                        <SocialMediaIcons social={post.social} />
-                      </div>
-                    )}
-                    <span
-                      className={`flex-shrink-0 inline-flex px-2.5 py-1 text-xs font-bold rounded-full ${getStatusColor(
-                        post.status
-                      )}`}
-                    >
-                      {post.status}
-                    </span>
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      <SocialMediaIcons social={post.social} />
+                      <span
+                        className={`inline-flex px-2.5 py-1 text-xs font-bold rounded-full ${getStatusColor(
+                          post.status
+                        )}`}
+                      >
+                        {post.status}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-xs text-slate-600 mb-2 font-medium">
                     {post.users?.username || "Unknown"}
@@ -524,7 +607,10 @@ export default function PostsTable({
         <EditPostModal
           post={editingPost}
           onClose={() => setEditingPost(null)}
-          onSuccess={() => {
+          onSuccess={(updatedPost) => {
+            if (updatedPost) {
+              updatePostOptimistically(editingPost.id, updatedPost);
+            }
             setEditingPost(null);
             onRefresh();
           }}
@@ -562,7 +648,13 @@ export default function PostsTable({
             posts.find((p) => p.id === updatingStatusPostId)?.status || "pending"
           }
           onClose={() => setUpdatingStatusPostId(null)}
-          onSuccess={() => {
+          onSuccess={(status, comment) => {
+            if (status) {
+              updatePostOptimistically(updatingStatusPostId, {
+                status,
+                comment: comment || null,
+              });
+            }
             setUpdatingStatusPostId(null);
             onRefresh();
           }}

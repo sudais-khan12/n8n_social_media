@@ -21,7 +21,7 @@ interface Post {
 interface EditPostModalProps {
   post: Post;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (updatedPost?: Partial<Post>) => void;
 }
 
 export default function EditPostModal({
@@ -170,7 +170,21 @@ export default function EditPostModal({
         if (imagePreview && imagePreview.startsWith("blob:")) {
           URL.revokeObjectURL(imagePreview);
         }
-        onSuccess();
+        // Pass updated post data for optimistic update
+        onSuccess({
+          heading: formData.heading,
+          caption: formData.caption,
+          hookline: formData.hookline,
+          cta: formData.cta,
+          hashtags: formData.hashtags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0),
+          social: formData.social.trim(),
+          image_url: imageUrl,
+          status: newStatus || post.status,
+          comment: newComment !== undefined ? newComment : post.comment || null,
+        });
       } else {
         setError(result.error || "Failed to update post");
       }

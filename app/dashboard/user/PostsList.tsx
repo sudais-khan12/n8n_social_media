@@ -8,6 +8,7 @@ import {
   XCircle,
   FileText,
   Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 
 // Social Media Icons Component
@@ -69,6 +70,7 @@ const SocialMediaIcons = ({ social }: { social: string }) => {
   );
 };
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/app/lib/supabase/client";
 import PostDetailModal from "./PostDetailModal";
 import DisapproveModal from "./DisapproveModal";
 import { approvePost, disapprovePost } from "@/app/server/user/posts";
@@ -112,19 +114,67 @@ export default function PostsList({
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Sync posts when initialPosts changes (from realtime updates)
   useEffect(() => {
     setPosts(initialPosts);
   }, [initialPosts]);
 
+  // Set up Supabase realtime subscription for direct updates
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel("posts-list-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "posts",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            // Add new post optimistically
+            const newPost = payload.new as Post;
+            setPosts((prev) => [newPost, ...prev]);
+          } else if (payload.eventType === "UPDATE" && payload.new) {
+            // Update existing post
+            const updatedPost = payload.new as Post;
+            setPosts((prev) =>
+              prev.map((p) => (p.id === updatedPost.id ? updatedPost : p))
+            );
+          } else if (payload.eventType === "DELETE" && payload.old) {
+            // Remove deleted post
+            const deletedId = payload.old.id;
+            setPosts((prev) => prev.filter((p) => p.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Debounce search query
   useEffect(() => {
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+    }
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
+      setIsSearching(false);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (!searchQuery.trim()) {
+        setIsSearching(false);
+      }
+    };
   }, [searchQuery]);
 
   // Filter posts based on search query, status filter, and social filter
@@ -149,9 +199,13 @@ export default function PostsList({
       const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter((post) => {
         const matchesTitle = post.heading?.toLowerCase().includes(query);
+        const matchesCaption = post.caption?.toLowerCase().includes(query);
         const matchesStatus = post.status?.toLowerCase().includes(query);
         const matchesSocial = post.social?.toLowerCase().includes(query);
-        return matchesTitle || matchesStatus || matchesSocial;
+        const matchesHashtags = post.hashtags?.some((tag) => tag.toLowerCase().includes(query));
+        const matchesHookline = post.hookline?.toLowerCase().includes(query);
+        const matchesCta = post.cta?.toLowerCase().includes(query);
+        return matchesTitle || matchesCaption || matchesStatus || matchesSocial || matchesHashtags || matchesHookline || matchesCta;
       });
     }
 
@@ -180,27 +234,45 @@ export default function PostsList({
     setError(null);
     setSuccess(null);
 
+    // Optimistic update - update UI immediately
+    const originalPost = posts.find((p) => p.id === postId);
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? { ...post, status: "approved", comment: null }
+          : post
+      )
+    );
+
     try {
       const result = await approvePost(postId);
 
       if (result.success) {
         setSuccess(result.message || "Post approved successfully");
-        // Update post status in local state
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
-            post.id === postId
-              ? { ...post, status: "approved", comment: null }
-              : post
-          )
-        );
-        // Refresh page data
+        // Refresh page data to sync with server
         setTimeout(() => {
           onRefresh();
-        }, 1000);
+        }, 500);
       } else {
+        // Rollback on error
+        if (originalPost) {
+          setPosts((prevPosts) =>
+            prevPosts.map((post) =>
+              post.id === postId ? originalPost : post
+            )
+          );
+        }
         setError(result.error || "Failed to approve post");
       }
     } catch (err) {
+      // Rollback on error
+      if (originalPost) {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId ? originalPost : post
+          )
+        );
+      }
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoadingPostId(null);
@@ -218,28 +290,46 @@ export default function PostsList({
     setError(null);
     setSuccess(null);
 
+    // Optimistic update - update UI immediately
+    const originalPost = posts.find((p) => p.id === postId);
+    setDisapprovePostId(null);
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? { ...post, status: "rejected", comment: comment.trim() }
+          : post
+      )
+    );
+
     try {
       const result = await disapprovePost(postId, comment);
 
       if (result.success) {
         setSuccess(result.message || "Post rejected successfully");
-        setDisapprovePostId(null);
-        // Update post status in local state
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
-            post.id === postId
-              ? { ...post, status: "rejected", comment: comment.trim() }
-              : post
-          )
-        );
-        // Refresh page data
+        // Refresh page data to sync with server
         setTimeout(() => {
           onRefresh();
-        }, 1000);
+        }, 500);
       } else {
+        // Rollback on error
+        if (originalPost) {
+          setPosts((prevPosts) =>
+            prevPosts.map((post) =>
+              post.id === postId ? originalPost : post
+            )
+          );
+        }
         setError(result.error || "Failed to reject post");
       }
     } catch (err) {
+      // Rollback on error
+      if (originalPost) {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId ? originalPost : post
+          )
+        );
+      }
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoadingPostId(null);
@@ -266,19 +356,23 @@ export default function PostsList({
         className="mb-6"
       >
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          {isSearching ? (
+            <Loader2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-indigo-500 animate-spin" />
+          ) : (
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+          )}
           <input
             type="text"
-            placeholder="Search posts by title, status, or social type..."
+            placeholder="Search by title, caption, status, social, hashtags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-xl border-2 border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all hover:shadow-md"
+            className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-white/80 backdrop-blur-xl border-2 border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-slate-900 placeholder:text-slate-400 transition-all hover:shadow-md text-base"
           />
         </div>
       </motion.div>
 
       {/* Desktop Grid View */}
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <AnimatePresence>
           {filteredPosts.map((post, index) => (
             <motion.div
@@ -293,13 +387,13 @@ export default function PostsList({
             {post.image_url && (
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="aspect-video bg-slate-100 relative overflow-hidden cursor-pointer rounded-t-2xl"
+                className="bg-slate-100 relative overflow-hidden cursor-pointer rounded-t-2xl flex items-center justify-center min-h-[200px] max-h-[300px]"
                 onClick={() => setViewingPostDetail(post)}
               >
                 <img
                   src={post.image_url}
                   alt={post.heading}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full max-h-[300px] object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
                       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e4e4e7' width='400' height='300'/%3E%3Ctext fill='%23918196' font-family='sans-serif' font-size='20' dy='10.5' font-weight='bold' x='50%25' y='50%25' text-anchor='middle'%3EImage not available%3C/text%3E%3C/svg%3E";
@@ -318,7 +412,7 @@ export default function PostsList({
             )}
 
             {/* Post Content */}
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <h3
                   className="text-lg font-bold text-slate-900 line-clamp-2 cursor-pointer hover:text-indigo-600 transition-colors flex-1"
@@ -419,7 +513,7 @@ export default function PostsList({
               transition={{ duration: 0.2, delay: index * 0.05 }}
               className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-md border border-white/30 overflow-hidden"
             >
-              <div className="flex gap-4 p-4">
+              <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
                 {post.image_url && (
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -429,7 +523,7 @@ export default function PostsList({
                     <img
                       src={post.image_url}
                       alt={post.heading}
-                      className="h-24 w-24 object-cover rounded-xl shadow-lg border-2 border-white/50"
+                      className="h-24 w-24 object-contain rounded-xl shadow-lg border-2 border-white/50 bg-slate-50"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
@@ -439,7 +533,7 @@ export default function PostsList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3
-                      className="text-sm font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600 transition-colors flex-1"
+                      className="text-sm sm:text-base font-bold text-slate-900 truncate cursor-pointer hover:text-indigo-600 transition-colors flex-1"
                       onClick={() => setViewingPostDetail(post)}
                     >
                       {post.heading}
