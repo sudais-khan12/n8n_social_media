@@ -67,6 +67,7 @@ export default function AdminDashboard({
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -361,9 +362,63 @@ export default function AdminDashboard({
                 </p>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-white/30 flex-1 sm:flex-initial">
-                  <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
-                  <span className="font-semibold text-slate-900 text-sm sm:text-base truncate">{username}</span>
+                {/* User Menu Dropdown */}
+                <div className="relative">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/70 transition-all cursor-pointer"
+                  >
+                    <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
+                    <span className="font-semibold text-slate-900 text-sm sm:text-base truncate hidden sm:inline">{username}</span>
+                  </motion.button>
+                  
+                  {/* Dropdown Menu */}
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowUserMenu(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-white/30 z-50 overflow-hidden"
+                        >
+                          <div className="px-4 py-3 border-b border-slate-200/50">
+                            <p className="text-sm font-semibold text-slate-900">{username}</p>
+                            <p className="text-xs text-slate-500">Admin</p>
+                          </div>
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setShowChangePassword(true);
+                                setShowUserMenu(false);
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                            >
+                              <Key className="w-4 h-4" />
+                              <span>Change Password</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowUserMenu(false);
+                                handleLogout();
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            >
+                              <LogOut className="w-4 h-4" />
+                              <span>Logout</span>
+                            </button>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -526,25 +581,6 @@ export default function AdminDashboard({
               )}
             </AnimatePresence>
 
-            {/* Mobile Logout and Change Password */}
-            <div className="lg:hidden px-4 sm:px-6 pb-4 flex gap-2 border-t border-slate-200/50 pt-4">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowChangePassword(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all text-slate-700 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer"
-              >
-                <Key className="w-4 h-4" />
-                <span>Password</span>
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all text-slate-700 bg-slate-100 hover:bg-red-50 hover:text-red-600 cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </motion.button>
-            </div>
           </motion.header>
 
           {/* Content Area */}
