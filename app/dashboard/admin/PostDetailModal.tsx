@@ -271,57 +271,39 @@ export default function PostDetailModal({
 
           {/* Action Buttons */}
           <div className="pt-4 border-t border-slate-200 space-y-3">
-            {/* Quick Action Buttons - Show for non-posted posts */}
-            {post.status !== "posted" && (
+            {/* Quick Action Buttons - Show only for pending posts */}
+            {post.status === "pending" && (
               <div className="flex flex-col sm:flex-row gap-3">
-                {post.status !== "approved" && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleQuickApprove}
-                    disabled={isUpdating}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
-                  >
-                    {isUpdating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Approving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-5 h-5" />
-                        Approve Post
-                      </>
-                    )}
-                  </motion.button>
-                )}
-                {post.status !== "rejected" && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowStatusModal(true)}
-                    disabled={isUpdating}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
-                  >
-                    <XCircle className="w-5 h-5" />
-                    Reject Post
-                  </motion.button>
-                )}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleQuickApprove}
+                  disabled={isUpdating}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Approving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-5 h-5" />
+                      Approve Post
+                    </>
+                  )}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowStatusModal(true)}
+                  disabled={isUpdating}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
+                >
+                  <XCircle className="w-5 h-5" />
+                  Reject Post
+                </motion.button>
               </div>
-            )}
-            
-            {/* Status Update Button - Show for pending posts or to change status */}
-            {(post.status === "pending" || post.status === "draft") && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowStatusModal(true)}
-                disabled={isUpdating}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
-              >
-                <FileText className="w-5 h-5" />
-                Review & Update Status
-              </motion.button>
             )}
 
             <div className="flex justify-end">

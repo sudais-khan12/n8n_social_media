@@ -448,37 +448,33 @@ export default function PostsTable({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Quick Approve/Reject - Show for non-posted posts */}
-                        {post.status !== "posted" && (
+                        {/* Quick Approve/Reject - Show only for pending posts */}
+                        {post.status === "pending" && (
                           <>
-                            {post.status !== "approved" && (
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => handleQuickApprove(post.id)}
-                                disabled={quickActionPostId === post.id}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50"
-                                title="Quick Approve"
-                              >
-                                {quickActionPostId === post.id ? (
-                                  <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                  <CheckCircle2 className="w-5 h-5" />
-                                )}
-                              </motion.button>
-                            )}
-                            {post.status !== "rejected" && (
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => setUpdatingStatusPostId(post.id)}
-                                disabled={quickActionPostId === post.id}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50"
-                                title="Reject"
-                              >
-                                <XCircle className="w-5 h-5" />
-                              </motion.button>
-                            )}
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleQuickApprove(post.id)}
+                              disabled={quickActionPostId === post.id}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                              title="Quick Approve"
+                            >
+                              {quickActionPostId === post.id ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="w-5 h-5" />
+                              )}
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setUpdatingStatusPostId(post.id)}
+                              disabled={quickActionPostId === post.id}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                              title="Reject"
+                            >
+                              <XCircle className="w-5 h-5" />
+                            </motion.button>
                           </>
                         )}
                         {post.status === "pending" && (
