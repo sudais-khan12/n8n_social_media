@@ -122,8 +122,8 @@ export default function UserDashboard({
                 </div>
               </div>
 
-              {/* Navigation */}
-              <nav className="flex-1 px-3 py-4 space-y-1 flex flex-col overflow-y-auto">
+              {/* Navigation - Scrollable Area */}
+              <nav className="flex-1 px-3 py-4 space-y-1 flex flex-col overflow-y-auto min-h-0">
                 <div className="space-y-1">
                   <button
                     onClick={() => setStatusFilter(null)}
@@ -226,25 +226,25 @@ export default function UserDashboard({
                     <span>LinkedIn</span>
                   </button>
                 </div>
-                
-                {/* Bottom Actions */}
-                <div className="pt-3 border-t border-slate-200 space-y-1">
-                  <button
-                    onClick={() => setShowChangePassword(true)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-slate-100 cursor-pointer"
-                  >
-                    <Key className="w-4 h-4" />
-                    <span>Change Password</span>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-red-50 hover:text-red-600 cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
               </nav>
+              
+              {/* Bottom Actions - Fixed at bottom */}
+              <div className="flex-shrink-0 px-3 py-4 border-t border-slate-200/50 space-y-1 bg-white/70">
+                <button
+                  onClick={() => setShowChangePassword(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-slate-100 cursor-pointer"
+                >
+                  <Key className="w-4 h-4" />
+                  <span>Change Password</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all text-slate-700 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
             </motion.div>
           </div>
         </aside>

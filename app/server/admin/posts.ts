@@ -257,10 +257,11 @@ export async function updatePostStatus(
       throw new Error("Post not found");
     }
 
-    // Only allow status update for pending posts
-    if (existingPost.status !== "pending") {
+    // Allow admins to update status from any state (except posted)
+    // Posted posts should not be changed back
+    if (existingPost.status === "posted") {
       throw new Error(
-        `Cannot update status. Post is currently "${existingPost.status}". Only pending posts can be approved or rejected.`
+        `Cannot update status. Post is already posted and cannot be changed.`
       );
     }
 

@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { updatePost } from "@/app/server/admin/posts";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { updatePost, updatePostStatus } from "@/app/server/admin/posts";
+import StatusUpdateModal from "./StatusUpdateModal";
 import Toast from "@/app/components/Toast";
 
 interface Post {
@@ -23,13 +26,17 @@ interface EditPostModalProps {
   post: Post;
   onClose: () => void;
   onSuccess: (updatedPost?: Partial<Post>) => void;
+  onStatusUpdate?: (postId: string, status: string, comment?: string | null) => void;
 }
 
 export default function EditPostModal({
   post,
   onClose,
   onSuccess,
+  onStatusUpdate,
 }: EditPostModalProps) {
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
   const [formData, setFormData] = useState({
     heading: post.heading,
     caption: post.caption,
@@ -398,6 +405,21 @@ export default function EditPostModal({
           </div>
         </form>
       </div>
+
+      {showStatusModal && (
+        <StatusUpdateModal
+          postId={post.id}
+          currentStatus={post.status}
+          onClose={() => setShowStatusModal(false)}
+          onSuccess={(status, comment) => {
+            setShowStatusModal(false);
+            if (onStatusUpdate) {
+              onStatusUpdate(post.id, status || "rejected", comment);
+            }
+            onSuccess({ status: status || "rejected", comment: comment || null });
+          }}
+        />
+      )}
     </div>
   );
 }

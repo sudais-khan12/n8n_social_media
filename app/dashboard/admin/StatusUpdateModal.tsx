@@ -24,8 +24,9 @@ export default function StatusUpdateModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Only allow status update for pending posts
-  if (currentStatus !== "pending") {
+  // Allow admins to update status from any state (except posted)
+  // Posted posts should not be changed
+  if (currentStatus === "posted") {
     return null;
   }
 

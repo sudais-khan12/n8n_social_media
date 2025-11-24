@@ -1,6 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckCircle2, XCircle, Loader2, FileText } from "lucide-react";
+import { motion } from "framer-motion";
+import { updatePostStatus } from "@/app/server/admin/posts";
+import StatusUpdateModal from "./StatusUpdateModal";
+import Toast from "@/app/components/Toast";
 
 // Social Media Icons Component
 const SocialMediaIcons = ({ social }: { social: string }) => {
@@ -83,12 +89,46 @@ interface Post {
 interface PostDetailModalProps {
   post: Post;
   onClose: () => void;
+  onStatusUpdate?: (postId: string, status: string, comment?: string | null) => void;
 }
 
 export default function PostDetailModal({
   post,
   onClose,
+  onStatusUpdate,
 }: PostDetailModalProps) {
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const handleQuickApprove = async () => {
+    if (post.status === "posted") return;
+    
+    setIsUpdating(true);
+    try {
+      const result = await updatePostStatus(post.id, {
+        status: "approved",
+        comment: null,
+      });
+      
+      if (result.success) {
+        setToast({ message: "Post approved successfully!", type: "success" });
+        if (onStatusUpdate) {
+          onStatusUpdate(post.id, "approved", null);
+        }
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      } else {
+        setToast({ message: result.error || "Failed to approve post", type: "error" });
+      }
+    } catch (error) {
+      setToast({ message: "An error occurred", type: "error" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
@@ -229,16 +269,98 @@ export default function PostDetailModal({
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t border-slate-200">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/50"
-            >
-              Close
-            </button>
+          {/* Action Buttons */}
+          <div className="pt-4 border-t border-slate-200 space-y-3">
+            {/* Quick Action Buttons - Show for non-posted posts */}
+            {post.status !== "posted" && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {post.status !== "approved" && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleQuickApprove}
+                    disabled={isUpdating}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Approving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        Approve Post
+                      </>
+                    )}
+                  </motion.button>
+                )}
+                {post.status !== "rejected" && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowStatusModal(true)}
+                    disabled={isUpdating}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    Reject Post
+                  </motion.button>
+                )}
+              </div>
+            )}
+            
+            {/* Status Update Button - Show for pending posts or to change status */}
+            {(post.status === "pending" || post.status === "draft") && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowStatusModal(true)}
+                disabled={isUpdating}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 via-blue-600 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:via-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md font-semibold cursor-pointer"
+              >
+                <FileText className="w-5 h-5" />
+                Review & Update Status
+              </motion.button>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-semibold"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {showStatusModal && (
+        <StatusUpdateModal
+          postId={post.id}
+          currentStatus={post.status}
+          onClose={() => setShowStatusModal(false)}
+          onSuccess={(status, comment) => {
+            setShowStatusModal(false);
+            if (onStatusUpdate) {
+              onStatusUpdate(post.id, status || "approved", comment);
+            }
+            setToast({ message: `Post ${status === "approved" ? "approved" : "rejected"} successfully!`, type: "success" });
+            setTimeout(() => {
+              onClose();
+            }, 1000);
+          }}
+        />
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

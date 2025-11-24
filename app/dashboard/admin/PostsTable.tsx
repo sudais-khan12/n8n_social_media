@@ -9,6 +9,8 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 // Social Media Icons Component
@@ -168,6 +170,7 @@ export default function PostsTable({
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [quickActionPostId, setQuickActionPostId] = useState<string | null>(null);
 
   // Function to update a post optimistically
   const updatePostOptimistically = (postId: string, updates: Partial<Post>) => {
@@ -282,6 +285,40 @@ export default function PostsTable({
       setToast({ message: "An error occurred while deleting the post", type: "error" });
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleQuickApprove = async (postId: string) => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post || post.status === "posted") return;
+    
+    setQuickActionPostId(postId);
+    const originalStatus = post.status;
+    
+    // Optimistic update
+    updatePostOptimistically(postId, { status: "approved", comment: null });
+    
+    try {
+      const { updatePostStatus } = await import("@/app/server/admin/posts");
+      const result = await updatePostStatus(postId, {
+        status: "approved",
+        comment: null,
+      });
+      
+      if (result.success) {
+        setToast({ message: "Post approved successfully!", type: "success" });
+        onRefresh();
+      } else {
+        // Rollback
+        updatePostOptimistically(postId, { status: originalStatus });
+        setToast({ message: result.error || "Failed to approve post", type: "error" });
+      }
+    } catch (error) {
+      // Rollback
+      updatePostOptimistically(postId, { status: originalStatus });
+      setToast({ message: "An error occurred", type: "error" });
+    } finally {
+      setQuickActionPostId(null);
     }
   };
 
@@ -411,13 +448,46 @@ export default function PostsTable({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Quick Approve/Reject - Show for non-posted posts */}
+                        {post.status !== "posted" && (
+                          <>
+                            {post.status !== "approved" && (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleQuickApprove(post.id)}
+                                disabled={quickActionPostId === post.id}
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                                title="Quick Approve"
+                              >
+                                {quickActionPostId === post.id ? (
+                                  <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="w-5 h-5" />
+                                )}
+                              </motion.button>
+                            )}
+                            {post.status !== "rejected" && (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setUpdatingStatusPostId(post.id)}
+                                disabled={quickActionPostId === post.id}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                                title="Reject"
+                              >
+                                <XCircle className="w-5 h-5" />
+                              </motion.button>
+                            )}
+                          </>
+                        )}
                         {post.status === "pending" && (
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setUpdatingStatusPostId(post.id)}
                             className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-xl transition-colors shadow-sm cursor-pointer"
-                            title="Review"
+                            title="Review & Update Status"
                           >
                             <FileText className="w-5 h-5" />
                           </motion.button>
@@ -614,6 +684,13 @@ export default function PostsTable({
             setEditingPost(null);
             onRefresh();
           }}
+          onStatusUpdate={(postId, status, comment) => {
+            updatePostOptimistically(postId, {
+              status,
+              comment: comment || null,
+            });
+            onRefresh();
+          }}
         />
       )}
 
@@ -638,6 +715,13 @@ export default function PostsTable({
         <PostDetailModal
           post={viewingPostDetail}
           onClose={() => setViewingPostDetail(null)}
+          onStatusUpdate={(postId, status, comment) => {
+            updatePostOptimistically(postId, {
+              status,
+              comment: comment || null,
+            });
+            onRefresh();
+          }}
         />
       )}
 
